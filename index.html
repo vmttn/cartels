@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Générateur de cartel</title>
+  <style>
+    /* ── Global ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      background: #f0ede8;
+      color: #222;
+      min-height: 100vh;
+    }
+
+    /* ── Screen layout ── */
+    @media screen {
+      .page {
+        display: flex;
+        gap: 2rem;
+        padding: 2rem;
+        max-width: 1100px;
+        margin: 0 auto;
+        align-items: flex-start;
+      }
+
+      /* Form panel */
+      .form-panel {
+        flex: 0 0 320px;
+        background: #fff;
+        border: 1px solid #d0ccc6;
+        border-radius: 4px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      }
+
+      .form-panel h1 {
+        font-size: 1rem;
+        font-weight: bold;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        margin-bottom: 1.25rem;
+        color: #3a3a3a;
+        border-bottom: 2px solid #3a3a3a;
+        padding-bottom: .5rem;
+      }
+
+      .field-group {
+        margin-bottom: .9rem;
+      }
+
+      .field-group label {
+        display: block;
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: #666;
+        margin-bottom: .25rem;
+        font-family: Arial, sans-serif;
+      }
+
+      .field-group input,
+      .field-group textarea {
+        width: 100%;
+        border: 1px solid #ccc;
+        border-radius: 2px;
+        padding: .35rem .5rem;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: .9rem;
+        color: #222;
+        background: #fafaf8;
+        transition: border-color .15s;
+      }
+
+      .field-group input:focus,
+      .field-group textarea:focus {
+        outline: none;
+        border-color: #3a3a3a;
+        background: #fff;
+      }
+
+      .field-group textarea {
+        resize: vertical;
+        min-height: 90px;
+        line-height: 1.45;
+      }
+
+      .field-row {
+        display: flex;
+        gap: .6rem;
+      }
+
+      .field-row .field-group {
+        flex: 1;
+      }
+
+      .btn-print {
+        display: block;
+        width: 100%;
+        margin-top: 1.25rem;
+        padding: .6rem 1rem;
+        background: #3a3a3a;
+        color: #fff;
+        border: none;
+        border-radius: 2px;
+        font-family: Arial, sans-serif;
+        font-size: .8rem;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        cursor: pointer;
+        transition: background .15s;
+      }
+
+      .btn-print:hover { background: #555; }
+
+      /* Preview panel */
+      .preview-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .preview-panel .panel-title {
+        font-family: Arial, sans-serif;
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #888;
+        align-self: flex-start;
+      }
+    }
+
+    /* ── Label card — shared structural styles ── */
+    .label {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .label-content {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 260px;
+    }
+
+    /* ── Louvre style ── */
+    .label.style-louvre {
+      width: 540px;
+      background: #fdfcf8;
+      border: 1px solid #b8b0a4;
+      box-shadow: 0 4px 20px rgba(0,0,0,.15);
+    }
+
+    .label.style-louvre .label-content {
+      padding: 1.5rem 1.75rem 1.25rem;
+    }
+
+    .label.style-louvre .artist {
+      font-size: 1.55rem;
+      line-height: 1.15;
+      margin-bottom: .25rem;
+    }
+
+    .label.style-louvre .artist .firstname {
+      font-weight: normal;
+    }
+
+    .label.style-louvre .artist .lastname {
+      font-variant: small-caps;
+      font-weight: bold;
+    }
+
+    .label.style-louvre .dates {
+      font-size: .82rem;
+      color: #444;
+      margin-bottom: 1rem;
+      font-style: normal;
+    }
+
+    .label.style-louvre .artwork-title {
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-bottom: .2rem;
+    }
+
+    .label.style-louvre .medium {
+      font-size: .82rem;
+      color: #444;
+      margin-bottom: .85rem;
+    }
+
+    .label.style-louvre .description {
+      font-size: .88rem;
+      line-height: 1.55;
+      text-align: justify;
+      color: #222;
+      flex: 1;
+    }
+
+/* ── Print ── */
+    @media print {
+      .form-panel,
+      .preview-panel .panel-title {
+        display: none !important;
+      }
+
+      body {
+        background: white;
+      }
+
+      .page {
+        padding: 0;
+        margin: 0;
+      }
+
+      .preview-panel {
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        display: flex;
+      }
+
+      .label {
+        box-shadow: none;
+        border-color: #888;
+      }
+
+      @page {
+        margin: 1.5cm;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- ── Form panel ── -->
+    <aside class="form-panel">
+      <h1 id="panel-title">Cartel Louvre</h1>
+
+      <div class="field-group" style="margin-bottom:1.1rem;">
+        <label for="inp-style">Style</label>
+        <select id="inp-style" onchange="switchStyle()" style="width:100%;border:1px solid #ccc;border-radius:2px;padding:.35rem .5rem;font-family:Georgia,'Times New Roman',serif;font-size:.9rem;color:#222;background:#fafaf8;">
+          <option value="louvre">Louvre</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label for="inp-firstname">Prénom</label>
+          <input id="inp-firstname" type="text" value="Jean-Baptiste" oninput="update()">
+        </div>
+        <div class="field-group">
+          <label for="inp-lastname">Nom</label>
+          <input id="inp-lastname" type="text" value="Pigalle" oninput="update()">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label for="inp-birth">Naissance</label>
+          <input id="inp-birth" type="text" value="Paris, 1714" oninput="update()">
+        </div>
+        <div class="field-group">
+          <label for="inp-death">Décès</label>
+          <input id="inp-death" type="text" value="Paris, 1785" oninput="update()">
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="inp-title">Titre de l'œuvre</label>
+        <input id="inp-title" type="text" value="Voltaire nu" oninput="update()">
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label for="inp-medium">Techniques</label>
+          <input id="inp-medium" type="text" value="Marbre" oninput="update()">
+        </div>
+        <div class="field-group">
+          <label for="inp-year">Année</label>
+          <input id="inp-year" type="text" value="1776" oninput="update()">
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="inp-description">Description</label>
+        <textarea id="inp-description" oninput="update()">La statue fut commandée par un groupe de gens de lettres souhaitant honorer le philosophe de son vivant. Pigalle représenta Voltaire nu à la manière antique, ce qui suscita la polémique.</textarea>
+      </div>
+
+      <button class="btn-print" onclick="window.print()">Imprimer le cartel</button>
+    </aside>
+
+    <!-- ── Preview panel ── -->
+    <main class="preview-panel">
+      <p class="panel-title">Aperçu</p>
+
+      <div class="label style-louvre" id="label">
+        <div class="label-content">
+          <p class="artist">
+            <span class="firstname" id="out-firstname">Jean-Baptiste</span>
+            <span class="lastname" id="out-lastname">Pigalle</span>
+          </p>
+          <p class="dates" id="out-dates">Paris, 1714 – Paris, 1785</p>
+          <p class="artwork-title" id="out-title">Voltaire nu</p>
+          <p class="medium" id="out-medium">Marbre. 1776</p>
+          <p class="description" id="out-description">La statue fut commandée par un groupe de gens de lettres souhaitant honorer le philosophe de son vivant. Pigalle représenta Voltaire nu à la manière antique, ce qui suscita la polémique.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function esc(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function val(id) {
+      return document.getElementById(id).value;
+    }
+
+    function set(id, html) {
+      document.getElementById(id).innerHTML = html;
+    }
+
+    const styleNames = { louvre: 'Louvre' };
+
+    function switchStyle() {
+      const styleKey = document.getElementById('inp-style').value;
+      const label = document.getElementById('label');
+      label.className = label.className.replace(/\bstyle-\S+/g, '').trim();
+      label.classList.add('style-' + styleKey);
+      document.getElementById('panel-title').textContent = 'Cartel ' + (styleNames[styleKey] || styleKey);
+    }
+
+    function update() {
+      const firstname = val('inp-firstname');
+      const lastname  = val('inp-lastname');
+      const birth     = val('inp-birth');
+      const death     = val('inp-death');
+      const title     = val('inp-title');
+      const medium    = val('inp-medium');
+      const year      = val('inp-year');
+      const desc      = val('inp-description');
+set('out-firstname', esc(firstname) + (firstname && lastname ? '\u00a0' : ''));
+      set('out-lastname',  esc(lastname));
+
+      const dates = [birth, death].filter(Boolean).join('\u2009–\u2009');
+      set('out-dates', esc(dates));
+
+      set('out-title', esc(title));
+
+      const med = [medium, year].filter(Boolean).join('. ') + (medium || year ? '.' : '');
+      set('out-medium', esc(med));
+
+      // Preserve line breaks in description
+      set('out-description', esc(desc).replace(/\n/g, '<br>'));
+
+    }
+  </script>
+</body>
+</html>
