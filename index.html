@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Générateur de cartel</title>
+  <title>Générateur de cartels</title>
   <style>
     /* ── Global ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,16 +19,14 @@
     @media screen {
       .page {
         display: flex;
-        gap: 2rem;
+        gap: 1.5rem;
         padding: 2rem;
-        max-width: 1100px;
+        max-width: 1400px;
         margin: 0 auto;
         align-items: flex-start;
       }
 
-      /* Form panel */
-      .form-panel {
-        flex: 0 0 320px;
+      .panel {
         background: #fff;
         border: 1px solid #d0ccc6;
         border-radius: 4px;
@@ -36,7 +34,8 @@
         box-shadow: 0 2px 8px rgba(0,0,0,.08);
       }
 
-      .form-panel h1 {
+      .panel h1,
+      .panel h2 {
         font-size: 1rem;
         font-weight: bold;
         letter-spacing: .06em;
@@ -45,6 +44,86 @@
         color: #3a3a3a;
         border-bottom: 2px solid #3a3a3a;
         padding-bottom: .5rem;
+      }
+
+      /* List panel */
+      .list-panel {
+        flex: 0 0 250px;
+      }
+
+      .cartel-list {
+        list-style: none;
+        margin-bottom: 1rem;
+        max-height: 60vh;
+        overflow-y: auto;
+      }
+
+      .cartel-list li {
+        display: flex;
+        align-items: baseline;
+        gap: .4rem;
+        padding: .4rem .5rem;
+        border-radius: 2px;
+        cursor: pointer;
+        font-size: .88rem;
+        line-height: 1.3;
+      }
+
+      .cartel-list li:hover { background: #f4f2ee; }
+
+      .cartel-list li.selected {
+        background: #3a3a3a;
+        color: #fff;
+      }
+
+      .cartel-list .num {
+        font-family: Arial, sans-serif;
+        font-size: .7rem;
+        color: #999;
+        min-width: 1.2rem;
+      }
+
+      .cartel-list li.selected .num { color: #bbb; }
+
+      .cartel-list .name {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .cartel-list .warn {
+        font-family: Arial, sans-serif;
+        font-size: .65rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        padding: .05rem .3rem;
+        border-radius: 2px;
+        white-space: nowrap;
+      }
+
+      .cartel-list .warn.shrunk { background: #f3e6c4; color: #6b5310; }
+      .cartel-list .warn.overflow { background: #f2cfcb; color: #7a1f16; }
+
+      .list-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: .4rem;
+      }
+
+      .list-actions .btn-add { grid-column: 1 / -1; }
+
+      .print-info {
+        margin-top: 1rem;
+        font-family: Arial, sans-serif;
+        font-size: .72rem;
+        color: #888;
+        line-height: 1.4;
+      }
+
+      /* Form panel */
+      .form-panel {
+        flex: 0 0 320px;
       }
 
       .field-group {
@@ -62,7 +141,8 @@
       }
 
       .field-group input,
-      .field-group textarea {
+      .field-group textarea,
+      .field-group select {
         width: 100%;
         border: 1px solid #ccc;
         border-radius: 2px;
@@ -75,7 +155,8 @@
       }
 
       .field-group input:focus,
-      .field-group textarea:focus {
+      .field-group textarea:focus,
+      .field-group select:focus {
         outline: none;
         border-color: #3a3a3a;
         background: #fff;
@@ -83,7 +164,7 @@
 
       .field-group textarea {
         resize: vertical;
-        min-height: 90px;
+        min-height: 120px;
         line-height: 1.45;
       }
 
@@ -96,24 +177,42 @@
         flex: 1;
       }
 
-      .btn-print {
+      /* Buttons */
+      .btn {
         display: block;
         width: 100%;
+        padding: .45rem .6rem;
+        background: #fff;
+        color: #3a3a3a;
+        border: 1px solid #3a3a3a;
+        border-radius: 2px;
+        font-family: Arial, sans-serif;
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        cursor: pointer;
+        transition: background .15s, color .15s;
+      }
+
+      .btn:hover:not(:disabled) { background: #f4f2ee; }
+      .btn:disabled { opacity: .4; cursor: default; }
+
+      .btn.danger.confirming {
+        background: #9b2c20;
+        border-color: #9b2c20;
+        color: #fff;
+      }
+
+      .btn-print {
         margin-top: 1.25rem;
         padding: .6rem 1rem;
         background: #3a3a3a;
         color: #fff;
-        border: none;
-        border-radius: 2px;
-        font-family: Arial, sans-serif;
         font-size: .8rem;
-        text-transform: uppercase;
         letter-spacing: .08em;
-        cursor: pointer;
-        transition: background .15s;
       }
 
-      .btn-print:hover { background: #555; }
+      .btn-print:hover:not(:disabled) { background: #555; }
 
       /* Preview panel */
       .preview-panel {
@@ -132,37 +231,58 @@
         color: #888;
         align-self: flex-start;
       }
+
+      /* Shown at 1.5× physical size for readability */
+      .preview-zoom {
+        zoom: 1.5;
+      }
+
+      .preview-zoom .label {
+        box-shadow: 0 3px 14px rgba(0,0,0,.15);
+      }
+
+      /* Print sheets stay laid out off-screen so text fitting can be measured */
+      .print-area {
+        position: absolute;
+        left: -100000px;
+        top: 0;
+        visibility: hidden;
+      }
     }
 
-    /* ── Label card — shared structural styles ── */
+    /* ── Label card — shared structural styles ──
+       Physical size 10 × 7 cm. Font sizes scale with --k (auto-shrink). */
     .label {
+      --k: 1;
+      width: 100mm;
+      height: 70mm;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
 
     .label-content {
       display: flex;
       flex-direction: column;
       flex: 1;
-      min-height: 260px;
+      min-height: 0;
+      overflow: hidden;
     }
 
     /* ── Louvre style ── */
     .label.style-louvre {
-      width: 540px;
       background: #fdfcf8;
       border: 1px solid #b8b0a4;
-      box-shadow: 0 4px 20px rgba(0,0,0,.15);
     }
 
     .label.style-louvre .label-content {
-      padding: 1.5rem 1.75rem 1.25rem;
+      padding: 5mm 6mm 4.5mm;
     }
 
     .label.style-louvre .artist {
-      font-size: 1.55rem;
+      font-size: calc(var(--k) * 14pt);
       line-height: 1.15;
-      margin-bottom: .25rem;
+      margin-bottom: .2em;
     }
 
     .label.style-louvre .artist .firstname {
@@ -175,75 +295,99 @@
     }
 
     .label.style-louvre .dates {
-      font-size: .82rem;
+      font-size: calc(var(--k) * 8pt);
       color: #444;
-      margin-bottom: 1rem;
+      margin-bottom: 1.1em;
       font-style: normal;
     }
 
     .label.style-louvre .artwork-title {
       font-weight: bold;
-      font-size: 1.1rem;
-      margin-bottom: .2rem;
+      font-size: calc(var(--k) * 10pt);
+      margin-bottom: .2em;
     }
 
     .label.style-louvre .medium {
-      font-size: .82rem;
+      font-size: calc(var(--k) * 8pt);
       color: #444;
-      margin-bottom: .85rem;
+      margin-bottom: .9em;
     }
 
     .label.style-louvre .description {
-      font-size: .88rem;
-      line-height: 1.55;
+      font-size: calc(var(--k) * 8.5pt);
+      line-height: 1.45;
       text-align: justify;
       color: #222;
       flex: 1;
     }
 
-/* ── Print ── */
+    /* ── Print sheets: A4, 2 × 3 cartels, shared dashed cut lines ── */
+    .sheet {
+      width: 210mm;
+      height: 297mm;
+      display: grid;
+      grid-template-columns: repeat(2, 100mm);
+      grid-auto-rows: 70mm;
+      justify-content: center;
+      align-content: center;
+    }
+
+    .sheet .label {
+      border: none;
+      outline: .2mm dashed #999;
+    }
+
+    /* ── Print ── */
     @media print {
-      .form-panel,
-      .preview-panel .panel-title {
-        display: none !important;
-      }
-
-      body {
-        background: white;
-      }
-
-      .page {
-        padding: 0;
+      @page {
+        size: A4 portrait;
         margin: 0;
       }
 
-      .preview-panel {
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        display: flex;
+      .page { display: none !important; }
+
+      body { background: white; }
+
+      .sheet {
+        break-after: page;
+      }
+
+      .sheet:last-child {
+        break-after: auto;
       }
 
       .label {
-        box-shadow: none;
-        border-color: #888;
-      }
-
-      @page {
-        margin: 1.5cm;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
     }
   </style>
 </head>
 <body>
   <div class="page">
+    <!-- ── List panel ── -->
+    <aside class="panel list-panel">
+      <h2>Cartels</h2>
+      <ul class="cartel-list" id="cartel-list"></ul>
+
+      <div class="list-actions">
+        <button class="btn btn-add" onclick="addCartel()">+ Ajouter</button>
+        <button class="btn" onclick="duplicateCartel()">Dupliquer</button>
+        <button class="btn danger" id="btn-delete" onclick="deleteCartel()">Supprimer</button>
+        <button class="btn" id="btn-up" onclick="moveCartel(-1)">↑ Monter</button>
+        <button class="btn" id="btn-down" onclick="moveCartel(1)">↓ Descendre</button>
+      </div>
+
+      <p class="print-info" id="print-info"></p>
+    </aside>
+
     <!-- ── Form panel ── -->
-    <aside class="form-panel">
+    <aside class="panel form-panel">
       <h1 id="panel-title">Cartel Louvre</h1>
 
       <div class="field-group" style="margin-bottom:1.1rem;">
-        <label for="inp-style">Style</label>
-        <select id="inp-style" onchange="switchStyle()" style="width:100%;border:1px solid #ccc;border-radius:2px;padding:.35rem .5rem;font-family:Georgia,'Times New Roman',serif;font-size:.9rem;color:#222;background:#fafaf8;">
+        <label for="inp-style">Style (tous les cartels)</label>
+        <select id="inp-style" onchange="switchStyle()">
           <option value="louvre">Louvre</option>
         </select>
       </div>
@@ -251,69 +395,67 @@
       <div class="field-row">
         <div class="field-group">
           <label for="inp-firstname">Prénom</label>
-          <input id="inp-firstname" type="text" value="Jean-Baptiste" oninput="update()">
+          <input id="inp-firstname" type="text" data-field="firstname">
         </div>
         <div class="field-group">
           <label for="inp-lastname">Nom</label>
-          <input id="inp-lastname" type="text" value="Pigalle" oninput="update()">
+          <input id="inp-lastname" type="text" data-field="lastname">
         </div>
       </div>
 
       <div class="field-row">
         <div class="field-group">
           <label for="inp-birth">Naissance</label>
-          <input id="inp-birth" type="text" value="Paris, 1714" oninput="update()">
+          <input id="inp-birth" type="text" data-field="birth">
         </div>
         <div class="field-group">
           <label for="inp-death">Décès</label>
-          <input id="inp-death" type="text" value="Paris, 1785" oninput="update()">
+          <input id="inp-death" type="text" data-field="death">
         </div>
       </div>
 
       <div class="field-group">
         <label for="inp-title">Titre de l'œuvre</label>
-        <input id="inp-title" type="text" value="Voltaire nu" oninput="update()">
+        <input id="inp-title" type="text" data-field="title">
       </div>
 
       <div class="field-row">
         <div class="field-group">
           <label for="inp-medium">Techniques</label>
-          <input id="inp-medium" type="text" value="Marbre" oninput="update()">
+          <input id="inp-medium" type="text" data-field="medium">
         </div>
         <div class="field-group">
           <label for="inp-year">Année</label>
-          <input id="inp-year" type="text" value="1776" oninput="update()">
+          <input id="inp-year" type="text" data-field="year">
         </div>
       </div>
 
       <div class="field-group">
         <label for="inp-description">Description</label>
-        <textarea id="inp-description" oninput="update()">La statue fut commandée par un groupe de gens de lettres souhaitant honorer le philosophe de son vivant. Pigalle représenta Voltaire nu à la manière antique, ce qui suscita la polémique.</textarea>
+        <textarea id="inp-description" data-field="description"></textarea>
       </div>
 
-      <button class="btn-print" onclick="window.print()">Imprimer le cartel</button>
+      <button class="btn btn-print" id="btn-print" onclick="window.print()">Imprimer les cartels</button>
     </aside>
 
     <!-- ── Preview panel ── -->
     <main class="preview-panel">
-      <p class="panel-title">Aperçu</p>
-
-      <div class="label style-louvre" id="label">
-        <div class="label-content">
-          <p class="artist">
-            <span class="firstname" id="out-firstname">Jean-Baptiste</span>
-            <span class="lastname" id="out-lastname">Pigalle</span>
-          </p>
-          <p class="dates" id="out-dates">Paris, 1714 – Paris, 1785</p>
-          <p class="artwork-title" id="out-title">Voltaire nu</p>
-          <p class="medium" id="out-medium">Marbre. 1776</p>
-          <p class="description" id="out-description">La statue fut commandée par un groupe de gens de lettres souhaitant honorer le philosophe de son vivant. Pigalle représenta Voltaire nu à la manière antique, ce qui suscita la polémique.</p>
-        </div>
-      </div>
+      <p class="panel-title">Aperçu (10 × 7 cm, agrandi)</p>
+      <div class="preview-zoom" id="preview"></div>
     </main>
   </div>
 
+  <!-- ── Print sheets (off-screen on screen, the only thing printed) ── -->
+  <div class="print-area" id="print-area"></div>
+
   <script>
+    const STORAGE_KEY = 'cartels.v1';
+    const PER_SHEET   = 6;
+    const MIN_K       = 0.6;   // smallest font scale auto-shrink may use
+    const WARN_K      = 0.8;   // below this, flag the cartel as shrunk
+    const FIELDS      = ['firstname', 'lastname', 'birth', 'death', 'title', 'medium', 'year', 'description'];
+    const styleNames  = { louvre: 'Louvre' };
+
     function esc(str) {
       return str
         .replace(/&/g, '&amp;')
@@ -321,48 +463,242 @@
         .replace(/>/g, '&gt;');
     }
 
-    function val(id) {
-      return document.getElementById(id).value;
+    function newId() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     }
 
-    function set(id, html) {
-      document.getElementById(id).innerHTML = html;
+    function blankCartel() {
+      const c = { id: newId() };
+      FIELDS.forEach(f => c[f] = '');
+      return c;
     }
 
-    const styleNames = { louvre: 'Louvre' };
+    function sampleCartel() {
+      return {
+        id: newId(),
+        firstname: 'Jean-Baptiste',
+        lastname: 'Pigalle',
+        birth: 'Paris, 1714',
+        death: 'Paris, 1785',
+        title: 'Voltaire nu',
+        medium: 'Marbre',
+        year: '1776',
+        description: 'La statue fut commandée par un groupe de gens de lettres souhaitant honorer le philosophe de son vivant. Pigalle représenta Voltaire nu à la manière antique, ce qui suscita la polémique.',
+      };
+    }
+
+    /* ── State & persistence ── */
+
+    function load() {
+      try {
+        const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (data && Array.isArray(data.cartels) && data.cartels.length) return data;
+      } catch (e) { /* storage unavailable or corrupt */ }
+      const c = sampleCartel();
+      return { style: 'louvre', cartels: [c], selected: c.id };
+    }
+
+    function save() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) { /* storage unavailable */ }
+    }
+
+    const state = load();
+    const fits  = {};  // id → { k, overflow }
+
+    function selectedIndex() {
+      const i = state.cartels.findIndex(c => c.id === state.selected);
+      return i === -1 ? 0 : i;
+    }
+
+    function current() {
+      return state.cartels[selectedIndex()];
+    }
+
+    /* ── Label rendering ── */
+
+    function labelHTML(c) {
+      const dates = [c.birth, c.death].filter(Boolean).join(' – ');
+      const med   = [c.medium, c.year].filter(Boolean).join('. ') + (c.medium || c.year ? '.' : '');
+      return `
+        <div class="label style-${state.style}" data-id="${c.id}">
+          <div class="label-content">
+            <p class="artist">
+              <span class="firstname">${esc(c.firstname) + (c.firstname && c.lastname ? ' ' : '')}</span>
+              <span class="lastname">${esc(c.lastname)}</span>
+            </p>
+            <p class="dates">${esc(dates)}</p>
+            <p class="artwork-title">${esc(c.title)}</p>
+            <p class="medium">${esc(med)}</p>
+            <p class="description">${esc(c.description).replace(/\n/g, '<br>')}</p>
+          </div>
+        </div>`;
+    }
+
+    // Shrink the font scale until the content fits the fixed label size.
+    function fit(label) {
+      const content = label.querySelector('.label-content');
+      const overflows = () => content.scrollHeight > content.clientHeight + 1;
+      let k = 1;
+      label.style.setProperty('--k', k);
+      while (overflows() && k > MIN_K) {
+        k = Math.max(MIN_K, k - 0.025);
+        label.style.setProperty('--k', k);
+      }
+      fits[label.dataset.id] = { k, overflow: overflows() };
+    }
+
+    function renderPrintArea() {
+      const area = document.getElementById('print-area');
+      let html = '';
+      for (let i = 0; i < state.cartels.length; i += PER_SHEET) {
+        html += '<div class="sheet">' + state.cartels.slice(i, i + PER_SHEET).map(labelHTML).join('') + '</div>';
+      }
+      area.innerHTML = html;
+      area.querySelectorAll('.label').forEach(fit);
+    }
+
+    function renderOneInPrintArea(c) {
+      const old = document.querySelector(`#print-area .label[data-id="${c.id}"]`);
+      old.outerHTML = labelHTML(c);
+      fit(document.querySelector(`#print-area .label[data-id="${c.id}"]`));
+    }
+
+    function renderPreview() {
+      const c = current();
+      const preview = document.getElementById('preview');
+      preview.innerHTML = labelHTML(c);
+      preview.firstElementChild.style.setProperty('--k', fits[c.id].k);
+    }
+
+    function displayName(c) {
+      const name = [c.firstname, c.lastname].filter(Boolean).join(' ');
+      return [name, c.title].filter(Boolean).join(' — ') || 'Cartel vide';
+    }
+
+    function renderList() {
+      const list = document.getElementById('cartel-list');
+      list.innerHTML = state.cartels.map((c, i) => {
+        const f = fits[c.id];
+        let warn = '';
+        if (f.overflow) warn = '<span class="warn overflow" title="Le texte dépasse même à taille minimale">Déborde</span>';
+        else if (f.k < WARN_K) warn = '<span class="warn shrunk" title="Texte fortement réduit pour tenir">Réduit</span>';
+        return `<li class="${c.id === state.selected ? 'selected' : ''}" onclick="selectCartel('${c.id}')">
+            <span class="num">${i + 1}</span>
+            <span class="name">${esc(displayName(c))}</span>${warn}
+          </li>`;
+      }).join('');
+
+      const i = selectedIndex();
+      document.getElementById('btn-up').disabled     = i === 0;
+      document.getElementById('btn-down').disabled   = i === state.cartels.length - 1;
+      document.getElementById('btn-delete').disabled = state.cartels.length === 1;
+
+      const n = state.cartels.length;
+      const sheets = Math.ceil(n / PER_SHEET);
+      document.getElementById('print-info').textContent =
+        `${n} cartel${n > 1 ? 's' : ''} · ${sheets} page${sheets > 1 ? 's' : ''} A4 (${PER_SHEET} par page, 10 × 7 cm). ` +
+        'Découper le long des pointillés.';
+      document.getElementById('btn-print').textContent = `Imprimer ${n > 1 ? 'les ' + n + ' cartels' : 'le cartel'}`;
+    }
+
+    function fillForm() {
+      const c = current();
+      FIELDS.forEach(f => document.getElementById('inp-' + f).value = c[f]);
+    }
+
+    function renderAll() {
+      renderPrintArea();
+      renderPreview();
+      renderList();
+    }
+
+    /* ── Actions ── */
+
+    function selectCartel(id) {
+      state.selected = id;
+      save();
+      fillForm();
+      renderPreview();
+      renderList();
+    }
+
+    function insertAfterSelected(c) {
+      state.cartels.splice(selectedIndex() + 1, 0, c);
+      state.selected = c.id;
+      save();
+      fillForm();
+      renderAll();
+      document.getElementById('inp-firstname').focus();
+    }
+
+    function addCartel() {
+      insertAfterSelected(blankCartel());
+    }
+
+    function duplicateCartel() {
+      insertAfterSelected({ ...current(), id: newId() });
+    }
+
+    // Two-step delete: first click arms the button, second confirms.
+    let deleteTimer = null;
+    function deleteCartel() {
+      const btn = document.getElementById('btn-delete');
+      if (!btn.classList.contains('confirming')) {
+        btn.classList.add('confirming');
+        btn.textContent = 'Confirmer ?';
+        deleteTimer = setTimeout(resetDeleteButton, 3000);
+        return;
+      }
+      resetDeleteButton();
+      const i = selectedIndex();
+      state.cartels.splice(i, 1);
+      state.selected = state.cartels[Math.min(i, state.cartels.length - 1)].id;
+      save();
+      fillForm();
+      renderAll();
+    }
+
+    function resetDeleteButton() {
+      clearTimeout(deleteTimer);
+      const btn = document.getElementById('btn-delete');
+      btn.classList.remove('confirming');
+      btn.textContent = 'Supprimer';
+    }
+
+    function moveCartel(delta) {
+      const i = selectedIndex();
+      const j = i + delta;
+      if (j < 0 || j >= state.cartels.length) return;
+      [state.cartels[i], state.cartels[j]] = [state.cartels[j], state.cartels[i]];
+      save();
+      renderAll();
+    }
 
     function switchStyle() {
-      const styleKey = document.getElementById('inp-style').value;
-      const label = document.getElementById('label');
-      label.className = label.className.replace(/\bstyle-\S+/g, '').trim();
-      label.classList.add('style-' + styleKey);
-      document.getElementById('panel-title').textContent = 'Cartel ' + (styleNames[styleKey] || styleKey);
+      state.style = document.getElementById('inp-style').value;
+      document.getElementById('panel-title').textContent = 'Cartel ' + (styleNames[state.style] || state.style);
+      save();
+      renderAll();
     }
 
-    function update() {
-      const firstname = val('inp-firstname');
-      const lastname  = val('inp-lastname');
-      const birth     = val('inp-birth');
-      const death     = val('inp-death');
-      const title     = val('inp-title');
-      const medium    = val('inp-medium');
-      const year      = val('inp-year');
-      const desc      = val('inp-description');
-set('out-firstname', esc(firstname) + (firstname && lastname ? '\u00a0' : ''));
-      set('out-lastname',  esc(lastname));
-
-      const dates = [birth, death].filter(Boolean).join('\u2009–\u2009');
-      set('out-dates', esc(dates));
-
-      set('out-title', esc(title));
-
-      const med = [medium, year].filter(Boolean).join('. ') + (medium || year ? '.' : '');
-      set('out-medium', esc(med));
-
-      // Preserve line breaks in description
-      set('out-description', esc(desc).replace(/\n/g, '<br>'));
-
+    function onFieldInput(e) {
+      const c = current();
+      c[e.target.dataset.field] = e.target.value;
+      save();
+      renderOneInPrintArea(c);
+      renderPreview();
+      renderList();
     }
+
+    /* ── Init ── */
+
+    document.querySelectorAll('[data-field]').forEach(el => el.addEventListener('input', onFieldInput));
+    document.getElementById('inp-style').value = state.style;
+    document.getElementById('panel-title').textContent = 'Cartel ' + (styleNames[state.style] || state.style);
+    fillForm();
+    renderAll();
   </script>
 </body>
 </html>
