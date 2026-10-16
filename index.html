@@ -21,9 +21,9 @@
         display: flex;
         gap: 1.5rem;
         padding: 2rem;
-        max-width: 1400px;
-        margin: 0 auto;
-        align-items: flex-start;
+        min-height: 100vh;
+        justify-content: center;
+        align-items: center;
       }
 
       .panel {
@@ -46,84 +46,27 @@
         padding-bottom: .5rem;
       }
 
-      /* List panel */
-      .list-panel {
-        flex: 0 0 250px;
-      }
-
-      .cartel-list {
-        list-style: none;
-        margin-bottom: 1rem;
-        max-height: 60vh;
+      /* Form column: form card, then print button. Sticks to the window and
+         centers its content vertically; scrolls if the window is too short. */
+      .form-column {
+        flex: 0 0 320px;
+        align-self: flex-start;
+        position: sticky;
+        top: 2rem;
+        height: calc(100vh - 4rem);
+        display: flex;
+        flex-direction: column;
+        justify-content: safe center;
         overflow-y: auto;
       }
 
-      .cartel-list li {
-        display: flex;
-        align-items: baseline;
-        gap: .4rem;
-        padding: .4rem .5rem;
-        border-radius: 2px;
-        cursor: pointer;
-        font-size: .88rem;
-        line-height: 1.3;
-      }
-
-      .cartel-list li:hover { background: #f4f2ee; }
-
-      .cartel-list li.selected {
-        background: #3a3a3a;
-        color: #fff;
-      }
-
-      .cartel-list .num {
-        font-family: Arial, sans-serif;
-        font-size: .7rem;
-        color: #999;
-        min-width: 1.2rem;
-      }
-
-      .cartel-list li.selected .num { color: #bbb; }
-
-      .cartel-list .name {
-        flex: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .cartel-list .warn {
-        font-family: Arial, sans-serif;
-        font-size: .65rem;
-        text-transform: uppercase;
-        letter-spacing: .04em;
-        padding: .05rem .3rem;
-        border-radius: 2px;
-        white-space: nowrap;
-      }
-
-      .cartel-list .warn.shrunk { background: #f3e6c4; color: #6b5310; }
-      .cartel-list .warn.overflow { background: #f2cfcb; color: #7a1f16; }
-
-      .list-actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: .4rem;
-      }
-
-      .list-actions .btn-add { grid-column: 1 / -1; }
-
       .print-info {
-        margin-top: 1rem;
+        margin-top: .6rem;
         font-family: Arial, sans-serif;
         font-size: .72rem;
         color: #888;
         line-height: 1.4;
-      }
-
-      /* Form panel */
-      .form-panel {
-        flex: 0 0 320px;
+        text-align: center;
       }
 
       .field-group {
@@ -204,7 +147,7 @@
       }
 
       .btn-print {
-        margin-top: 1.25rem;
+        margin-top: 1rem;
         padding: .6rem 1rem;
         background: #3a3a3a;
         color: #fff;
@@ -214,39 +157,119 @@
 
       .btn-print:hover:not(:disabled) { background: #555; }
 
+      .btn-copy {
+        margin-top: .5rem;
+      }
+
+      #link-info:empty { display: none; }
+      #link-info { color: #8a6a12; }
+
       /* Preview panel */
+      /* As wide as an A4 sheet at real size, narrower if the window is */
       .preview-panel {
-        flex: 1;
+        flex: 0 1 210mm;
+        min-width: 0;
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 1rem;
       }
 
-      .preview-panel .panel-title {
+      .preview-toolbar {
+        align-self: stretch;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .4rem;
+      }
+
+      .preview-toolbar .panel-title {
         font-family: Arial, sans-serif;
         font-size: .72rem;
         text-transform: uppercase;
         letter-spacing: .06em;
         color: #888;
-        align-self: flex-start;
+        margin-right: auto;
       }
 
-      /* Shown at 1.5× physical size for readability */
-      .preview-zoom {
-        zoom: 1.5;
+      .preview-toolbar .btn {
+        width: auto;
       }
 
-      .preview-zoom .label {
-        box-shadow: 0 3px 14px rgba(0,0,0,.15);
+      .preview-toolbar .btn-add {
+        background: #3a3a3a;
+        color: #fff;
       }
 
-      /* Print sheets stay laid out off-screen so text fitting can be measured */
+      .preview-toolbar .btn-add:hover { background: #555; }
+
+      /* A4 sheets, scaled down with a transform so layout (and text fitting)
+         happens at true print size. The viewport gets the scaled dimensions. */
+      /* Padding gives the sheet shadows room inside the clipping box; negative
+         margins keep it out of the layout, and it lets clicks through to the
+         toolbar it overlaps. */
+      .sheets-viewport {
+        --shadow-room: 32px;
+        overflow: hidden;
+        padding: var(--shadow-room);
+        margin: calc(-1 * var(--shadow-room));
+        pointer-events: none;
+      }
+
+      .sheets-viewport .print-area {
+        pointer-events: auto;
+      }
+
       .print-area {
+        width: 210mm;
+        transform-origin: top left;
+      }
+
+      .print-area .sheet {
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 8px 24px rgba(0,0,0,.14);
+        margin-bottom: 10mm;
+      }
+
+      .print-area .label {
+        position: relative;
+        cursor: pointer;
+      }
+
+      .print-area .label:hover:not(.selected) {
+        outline: .5mm solid #b8b0a4;
+        outline-offset: -.25mm;
+      }
+
+      /* Fit warnings, set by fit() via data-fit */
+      .print-area .label[data-fit]::after {
         position: absolute;
-        left: -100000px;
-        top: 0;
-        visibility: hidden;
+        top: 2mm;
+        right: 2mm;
+        padding: .4mm 1.5mm;
+        border-radius: .6mm;
+        font-family: Arial, sans-serif;
+        font-size: 7pt;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+      }
+
+      .print-area .label[data-fit="shrunk"]::after {
+        content: 'Réduit';
+        background: #f3e6c4;
+        color: #6b5310;
+      }
+
+      .print-area .label[data-fit="overflow"]::after {
+        content: 'Déborde';
+        background: #f2cfcb;
+        color: #7a1f16;
+      }
+
+      .print-area .label.selected {
+        z-index: 1;
+        outline: .8mm solid #3a3a3a;
+        outline-offset: -.4mm;
       }
     }
 
@@ -327,7 +350,7 @@
       height: 297mm;
       display: grid;
       grid-template-columns: repeat(2, 100mm);
-      grid-auto-rows: 70mm;
+      grid-template-rows: repeat(3, 70mm);
       justify-content: center;
       align-content: center;
     }
@@ -344,9 +367,28 @@
         margin: 0;
       }
 
-      .page { display: none !important; }
+      .form-column,
+      .preview-toolbar {
+        display: none !important;
+      }
 
       body { background: white; }
+
+      .page,
+      .preview-panel {
+        display: block;
+      }
+
+      .sheets-viewport {
+        width: auto !important;
+        height: auto !important;
+        padding: 0;
+        margin: 0;
+      }
+
+      .print-area {
+        transform: none !important;
+      }
 
       .sheet {
         break-after: page;
@@ -365,24 +407,9 @@
 </head>
 <body>
   <div class="page">
-    <!-- ── List panel ── -->
-    <aside class="panel list-panel">
-      <h2>Cartels</h2>
-      <ul class="cartel-list" id="cartel-list"></ul>
-
-      <div class="list-actions">
-        <button class="btn btn-add" onclick="addCartel()">+ Ajouter</button>
-        <button class="btn" onclick="duplicateCartel()">Dupliquer</button>
-        <button class="btn danger" id="btn-delete" onclick="deleteCartel()">Supprimer</button>
-        <button class="btn" id="btn-up" onclick="moveCartel(-1)">↑ Monter</button>
-        <button class="btn" id="btn-down" onclick="moveCartel(1)">↓ Descendre</button>
-      </div>
-
-      <p class="print-info" id="print-info"></p>
-    </aside>
-
-    <!-- ── Form panel ── -->
-    <aside class="panel form-panel">
+    <!-- ── Form column ── -->
+    <aside class="form-column">
+    <div class="panel form-panel">
       <h1 id="panel-title">Cartel Louvre</h1>
 
       <div class="field-group" style="margin-bottom:1.1rem;">
@@ -434,22 +461,33 @@
         <label for="inp-description">Description</label>
         <textarea id="inp-description" data-field="description"></textarea>
       </div>
+    </div>
 
       <button class="btn btn-print" id="btn-print" onclick="window.print()">Imprimer les cartels</button>
+      <button class="btn btn-copy" id="btn-copy" onclick="copyLink()">Copier le lien</button>
+      <p class="print-info" id="print-info"></p>
+      <p class="print-info" id="link-info"></p>
     </aside>
 
-    <!-- ── Preview panel ── -->
+    <!-- ── Preview panel: the A4 sheets, click a cartel to edit it ── -->
     <main class="preview-panel">
-      <p class="panel-title">Aperçu (10 × 7 cm, agrandi)</p>
-      <div class="preview-zoom" id="preview"></div>
+      <div class="preview-toolbar">
+        <p class="panel-title" id="preview-title">Aperçu</p>
+        <button class="btn btn-add" onclick="addCartel()">+ Ajouter</button>
+        <button class="btn" onclick="duplicateCartel()">Dupliquer</button>
+        <button class="btn" id="btn-up" onclick="moveCartel(-1)" title="Déplacer avant">← Avant</button>
+        <button class="btn" id="btn-down" onclick="moveCartel(1)" title="Déplacer après">Après →</button>
+        <button class="btn danger" id="btn-delete" onclick="deleteCartel()">Supprimer</button>
+      </div>
+      <div class="sheets-viewport" id="sheets-viewport">
+        <div class="print-area" id="print-area"></div>
+      </div>
     </main>
   </div>
 
-  <!-- ── Print sheets (off-screen on screen, the only thing printed) ── -->
-  <div class="print-area" id="print-area"></div>
-
   <script>
-    const STORAGE_KEY = 'cartels.v1';
+    const LEGACY_STORAGE_KEY = 'cartels.v1';  // pre-URL autosave, migrated once
+    const LONG_LINK   = 2000;  // characters; some chat and mail apps truncate longer URLs
     const PER_SHEET   = 6;
     const MIN_K       = 0.6;   // smallest font scale auto-shrink may use
     const WARN_K      = 0.8;   // below this, flag the cartel as shrunk
@@ -487,25 +525,90 @@
       };
     }
 
-    /* ── State & persistence ── */
+    /* ── State & persistence ──
+       The URL fragment holds the whole state: #<base64url(deflate-raw(JSON))>,
+       with cartel fields stored positionally in FIELDS order. */
 
-    function load() {
+    async function pipeBytes(bytes, transform) {
+      const stream = new Blob([bytes]).stream().pipeThrough(transform);
+      return new Uint8Array(await new Response(stream).arrayBuffer());
+    }
+
+    function toBase64Url(bytes) {
+      let bin = '';
+      bytes.forEach(b => bin += String.fromCharCode(b));
+      return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function fromBase64Url(str) {
+      const bin = atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+      return Uint8Array.from(bin, ch => ch.charCodeAt(0));
+    }
+
+    async function encodeState(s) {
+      const payload = {
+        v: 1,
+        s: s.style,
+        i: Math.max(0, s.cartels.findIndex(c => c.id === s.selected)),
+        c: s.cartels.map(c => FIELDS.map(f => c[f])),
+      };
+      const json = new TextEncoder().encode(JSON.stringify(payload));
+      return toBase64Url(await pipeBytes(json, new CompressionStream('deflate-raw')));
+    }
+
+    // Returns null for anything that isn't a valid v1 state (corrupt or truncated link).
+    async function decodeState(encoded) {
       try {
-        const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if (data && Array.isArray(data.cartels) && data.cartels.length) return data;
+        const json = await pipeBytes(fromBase64Url(encoded), new DecompressionStream('deflate-raw'));
+        const p = JSON.parse(new TextDecoder().decode(json));
+        if (p.v !== 1 || !Array.isArray(p.c) || !p.c.length || !p.c.every(Array.isArray)) return null;
+        const cartels = p.c.map(values => {
+          const c = { id: newId() };
+          FIELDS.forEach((f, j) => c[f] = typeof values[j] === 'string' ? values[j] : '');
+          return c;
+        });
+        const i = Math.min(Math.max(0, p.i | 0), cartels.length - 1);
+        return { style: styleNames[p.s] ? p.s : 'louvre', cartels, selected: cartels[i].id };
+      } catch (e) {
+        return null;
+      }
+    }
+
+    let migratedLegacy = false;
+
+    async function load() {
+      const fromUrl = location.hash.length > 1 && await decodeState(location.hash.slice(1));
+      if (fromUrl) return fromUrl;
+      try {
+        const legacy = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY));
+        if (legacy && Array.isArray(legacy.cartels) && legacy.cartels.length) {
+          migratedLegacy = true;
+          return legacy;
+        }
       } catch (e) { /* storage unavailable or corrupt */ }
       const c = sampleCartel();
       return { style: 'louvre', cartels: [c], selected: c.id };
     }
 
+    // Debounced: typing updates the URL once it pauses.
+    let saveTimer = null;
+    let saveSeq   = 0;
+
     function save() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch (e) { /* storage unavailable */ }
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(writeUrl, 300);
     }
 
-    const state = load();
-    const fits  = {};  // id → { k, overflow }
+    async function writeUrl() {
+      clearTimeout(saveTimer);
+      const seq = ++saveSeq;
+      const encoded = await encodeState(state);
+      if (seq !== saveSeq) return;  // a newer write (or a loaded link) superseded this one
+      history.replaceState(null, '', '#' + encoded);
+      renderLinkInfo();
+    }
+
+    const state = {};
 
     function selectedIndex() {
       const i = state.cartels.findIndex(c => c.id === state.selected);
@@ -522,7 +625,7 @@
       const dates = [c.birth, c.death].filter(Boolean).join(' – ');
       const med   = [c.medium, c.year].filter(Boolean).join('. ') + (c.medium || c.year ? '.' : '');
       return `
-        <div class="label style-${state.style}" data-id="${c.id}">
+        <div class="label style-${state.style}${c.id === state.selected ? ' selected' : ''}" data-id="${c.id}">
           <div class="label-content">
             <p class="artist">
               <span class="firstname">${esc(c.firstname) + (c.firstname && c.lastname ? ' ' : '')}</span>
@@ -546,7 +649,8 @@
         k = Math.max(MIN_K, k - 0.025);
         label.style.setProperty('--k', k);
       }
-      fits[label.dataset.id] = { k, overflow: overflows() };
+      if (overflows())   label.dataset.fit = 'overflow';
+      else if (k < WARN_K) label.dataset.fit = 'shrunk';
     }
 
     function renderPrintArea() {
@@ -557,6 +661,7 @@
       }
       area.innerHTML = html;
       area.querySelectorAll('.label').forEach(fit);
+      scalePreview();
     }
 
     function renderOneInPrintArea(c) {
@@ -565,31 +670,24 @@
       fit(document.querySelector(`#print-area .label[data-id="${c.id}"]`));
     }
 
-    function renderPreview() {
-      const c = current();
-      const preview = document.getElementById('preview');
-      preview.innerHTML = labelHTML(c);
-      preview.firstElementChild.style.setProperty('--k', fits[c.id].k);
+    // Scale the sheets down to the preview panel width (never up).
+    function scalePreview() {
+      const area     = document.getElementById('print-area');
+      const viewport = document.getElementById('sheets-viewport');
+      const panel    = viewport.parentElement;
+      const room     = parseFloat(getComputedStyle(viewport).paddingLeft);
+      const scale    = Math.min(1, panel.clientWidth / area.offsetWidth);
+      area.style.transform    = `scale(${scale})`;
+      viewport.style.width    = area.offsetWidth * scale + 2 * room + 'px';
+      viewport.style.height   = area.offsetHeight * scale + 2 * room + 'px';
     }
 
-    function displayName(c) {
-      const name = [c.firstname, c.lastname].filter(Boolean).join(' ');
-      return [name, c.title].filter(Boolean).join(' — ') || 'Cartel vide';
+    function markSelected() {
+      document.querySelectorAll('#print-area .label').forEach(el =>
+        el.classList.toggle('selected', el.dataset.id === state.selected));
     }
 
-    function renderList() {
-      const list = document.getElementById('cartel-list');
-      list.innerHTML = state.cartels.map((c, i) => {
-        const f = fits[c.id];
-        let warn = '';
-        if (f.overflow) warn = '<span class="warn overflow" title="Le texte dépasse même à taille minimale">Déborde</span>';
-        else if (f.k < WARN_K) warn = '<span class="warn shrunk" title="Texte fortement réduit pour tenir">Réduit</span>';
-        return `<li class="${c.id === state.selected ? 'selected' : ''}" onclick="selectCartel('${c.id}')">
-            <span class="num">${i + 1}</span>
-            <span class="name">${esc(displayName(c))}</span>${warn}
-          </li>`;
-      }).join('');
-
+    function renderControls() {
       const i = selectedIndex();
       document.getElementById('btn-up').disabled     = i === 0;
       document.getElementById('btn-down').disabled   = i === state.cartels.length - 1;
@@ -601,6 +699,14 @@
         `${n} cartel${n > 1 ? 's' : ''} · ${sheets} page${sheets > 1 ? 's' : ''} A4 (${PER_SHEET} par page, 10 × 7 cm). ` +
         'Découper le long des pointillés.';
       document.getElementById('btn-print').textContent = `Imprimer ${n > 1 ? 'les ' + n + ' cartels' : 'le cartel'}`;
+      document.getElementById('preview-title').textContent = `Aperçu · ${sheets} page${sheets > 1 ? 's' : ''} A4`;
+    }
+
+    function renderLinkInfo() {
+      const n = location.href.length;
+      document.getElementById('link-info').textContent = n > LONG_LINK
+        ? `Lien long (${(n / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} Ko) : certaines messageries peuvent le tronquer.`
+        : '';
     }
 
     function fillForm() {
@@ -610,8 +716,7 @@
 
     function renderAll() {
       renderPrintArea();
-      renderPreview();
-      renderList();
+      renderControls();
     }
 
     /* ── Actions ── */
@@ -620,8 +725,8 @@
       state.selected = id;
       save();
       fillForm();
-      renderPreview();
-      renderList();
+      markSelected();
+      renderControls();
     }
 
     function insertAfterSelected(c) {
@@ -630,7 +735,8 @@
       save();
       fillForm();
       renderAll();
-      document.getElementById('inp-firstname').focus();
+      document.querySelector('#print-area .label.selected').scrollIntoView({ block: 'nearest' });
+      document.getElementById('inp-firstname').focus({ preventScroll: true });
     }
 
     function addCartel() {
@@ -678,9 +784,28 @@
 
     function switchStyle() {
       state.style = document.getElementById('inp-style').value;
-      document.getElementById('panel-title').textContent = 'Cartel ' + (styleNames[state.style] || state.style);
+      syncStyle();
       save();
       renderAll();
+    }
+
+    function syncStyle() {
+      document.getElementById('inp-style').value = state.style;
+      document.getElementById('panel-title').textContent = 'Cartel ' + (styleNames[state.style] || state.style);
+    }
+
+    let copyTimer = null;
+    async function copyLink() {
+      await writeUrl();  // flush a pending debounced save first
+      const btn = document.getElementById('btn-copy');
+      try {
+        await navigator.clipboard.writeText(location.href);
+        btn.textContent = 'Lien copié ✓';
+      } catch (e) {
+        btn.textContent = "Copiez l'adresse de la page";
+      }
+      clearTimeout(copyTimer);
+      copyTimer = setTimeout(() => btn.textContent = 'Copier le lien', 2000);
     }
 
     function onFieldInput(e) {
@@ -688,17 +813,42 @@
       c[e.target.dataset.field] = e.target.value;
       save();
       renderOneInPrintArea(c);
-      renderPreview();
-      renderList();
     }
 
     /* ── Init ── */
 
     document.querySelectorAll('[data-field]').forEach(el => el.addEventListener('input', onFieldInput));
-    document.getElementById('inp-style').value = state.style;
-    document.getElementById('panel-title').textContent = 'Cartel ' + (styleNames[state.style] || state.style);
-    fillForm();
-    renderAll();
+    document.getElementById('print-area').addEventListener('click', e => {
+      const label = e.target.closest('.label');
+      if (label) selectCartel(label.dataset.id);
+    });
+    window.addEventListener('resize', scalePreview);
+
+    // A different link pasted into this tab: load it.
+    window.addEventListener('hashchange', async () => {
+      const loaded = await decodeState(location.hash.slice(1));
+      if (!loaded) return;
+      clearTimeout(saveTimer);
+      saveSeq++;  // drop any in-flight write of the previous state
+      Object.assign(state, loaded);
+      syncStyle();
+      fillForm();
+      renderAll();
+      renderLinkInfo();
+    });
+
+    async function init() {
+      Object.assign(state, await load());
+      syncStyle();
+      fillForm();
+      renderAll();
+      await writeUrl();
+      if (migratedLegacy) {
+        try { localStorage.removeItem(LEGACY_STORAGE_KEY); } catch (e) { /* storage unavailable */ }
+      }
+    }
+
+    init();
   </script>
 </body>
 </html>
