@@ -137,7 +137,11 @@
         transition: background .15s, color .15s;
       }
 
-      .btn:hover:not(:disabled) { background: #f4f2ee; }
+      @media (hover: hover) {
+        .btn:hover:not(:disabled) { background: #f4f2ee; }
+        .btn-print:hover:not(:disabled) { background: #555; }
+        .preview-toolbar .btn-add:hover { background: #555; }
+      }
       .btn:disabled { opacity: .4; cursor: default; }
 
       .btn.danger.confirming {
@@ -154,8 +158,6 @@
         font-size: .8rem;
         letter-spacing: .08em;
       }
-
-      .btn-print:hover:not(:disabled) { background: #555; }
 
       .btn-copy {
         margin-top: .5rem;
@@ -201,8 +203,6 @@
         color: #fff;
       }
 
-      .preview-toolbar .btn-add:hover { background: #555; }
-
       /* A4 sheets, scaled down with a transform so layout (and text fitting)
          happens at true print size. The viewport gets the scaled dimensions. */
       /* Padding gives the sheet shadows room inside the clipping box; negative
@@ -236,9 +236,11 @@
         cursor: pointer;
       }
 
-      .print-area .label:hover:not(.selected) {
-        outline: .5mm solid #b8b0a4;
-        outline-offset: -.25mm;
+      @media (hover: hover) {
+        .print-area .label:hover:not(.selected) {
+          outline: .5mm solid #b8b0a4;
+          outline-offset: -.25mm;
+        }
       }
 
       /* Fit warnings, set by fit() via data-fit */
@@ -270,6 +272,55 @@
         z-index: 1;
         outline: .8mm solid #3a3a3a;
         outline-offset: -.4mm;
+      }
+    }
+
+    /* ── Narrow screens: form on top, preview below ── */
+    @media screen and (max-width: 760px) {
+      .page {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 1rem;
+        gap: 1.5rem;
+      }
+
+      .form-column {
+        flex: none;
+        position: static;
+        height: auto;
+        overflow: visible;
+      }
+
+      .preview-panel {
+        flex: none;
+      }
+
+      /* 16px keeps iOS from zooming in on focus */
+      .field-group input,
+      .field-group textarea,
+      .field-group select {
+        font-size: 16px;
+      }
+
+      .btn {
+        min-height: 44px;
+      }
+
+      .btn-print {
+        min-height: 48px;
+      }
+
+      .preview-toolbar .panel-title {
+        flex-basis: 100%;
+      }
+
+      .preview-toolbar .btn {
+        flex: 1 1 auto;
+      }
+
+      /* Must not exceed the page padding, or the page scrolls sideways */
+      .sheets-viewport {
+        --shadow-room: 1rem;
       }
     }
 
@@ -493,6 +544,11 @@
     const WARN_K      = 0.8;   // below this, flag the cartel as shrunk
     const FIELDS      = ['firstname', 'lastname', 'birth', 'death', 'title', 'medium', 'year', 'description'];
     const styleNames  = { louvre: 'Louvre' };
+    const narrow      = matchMedia('(max-width: 760px)');  // stacked layout, see CSS
+
+    function scrollToForm() {
+      document.querySelector('.form-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 
     function esc(str) {
       return str
@@ -735,7 +791,8 @@
       save();
       fillForm();
       renderAll();
-      document.querySelector('#print-area .label.selected').scrollIntoView({ block: 'nearest' });
+      if (narrow.matches) scrollToForm();
+      else document.querySelector('#print-area .label.selected').scrollIntoView({ block: 'nearest' });
       document.getElementById('inp-firstname').focus({ preventScroll: true });
     }
 
@@ -820,7 +877,9 @@
     document.querySelectorAll('[data-field]').forEach(el => el.addEventListener('input', onFieldInput));
     document.getElementById('print-area').addEventListener('click', e => {
       const label = e.target.closest('.label');
-      if (label) selectCartel(label.dataset.id);
+      if (!label) return;
+      selectCartel(label.dataset.id);
+      if (narrow.matches) scrollToForm();
     });
     window.addEventListener('resize', scalePreview);
 
