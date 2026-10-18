@@ -285,6 +285,11 @@
         outline-offset: -.4mm;
       }
 
+      /* The default selection outline disappears on the dark Orsay card */
+      .print-area .label.style-orsay.selected {
+        outline-color: #f4f4f2;
+      }
+
       /* Print dialog: pick the cartels to print */
       .print-dialog {
         margin: auto;
@@ -459,6 +464,120 @@
       flex: 1;
     }
 
+    /* ── MoMA style ── */
+    .label.style-moma {
+      background: #fff;
+      border: 1px solid #ccc;
+      font-family: 'Franklin Gothic Book', 'Libre Franklin', 'Helvetica Neue', Arial, sans-serif;
+      color: #111;
+    }
+
+    .label.style-moma .label-content {
+      padding: 6mm 7mm 5mm;
+    }
+
+    .label.style-moma .artist {
+      font-size: calc(var(--k) * 17pt);
+      line-height: 1.1;
+      margin-bottom: .1em;
+    }
+
+    .label.style-moma .dates {
+      font-size: calc(var(--k) * 8.5pt);
+      margin-bottom: .9em;
+    }
+
+    .label.style-moma .artwork-title {
+      font-size: calc(var(--k) * 8.5pt);
+      margin-bottom: .15em;
+    }
+
+    .label.style-moma .artwork-title strong {
+      font-weight: bold;
+    }
+
+    .label.style-moma .year {
+      margin-left: .4em;
+    }
+
+    .label.style-moma .medium {
+      font-size: calc(var(--k) * 8.5pt);
+      margin-bottom: 1.8em;
+    }
+
+    .label.style-moma .description {
+      font-size: calc(var(--k) * 8.5pt);
+      line-height: 1.4;
+      flex: 1;
+    }
+
+    /* ── Orsay style ── */
+    .label.style-orsay {
+      background: #3b3b3d;
+      border: 1px solid #3b3b3d;
+      color: #f4f4f2;
+      font-family: 'Univers Condensed', 'Frutiger LT Condensed', 'Roboto Condensed', 'Liberation Sans Narrow', 'Arial Narrow', Arial, sans-serif;
+      font-stretch: condensed;
+    }
+
+    .label.style-orsay .label-content {
+      padding: 7mm 6mm 5mm 12mm;
+    }
+
+    .label.style-orsay .artist {
+      font-size: calc(var(--k) * 15pt);
+      line-height: 1.1;
+      margin-bottom: .2em;
+    }
+
+    .label.style-orsay .dates {
+      font-size: calc(var(--k) * 8.5pt);
+      margin-bottom: calc(var(--k) * 3.5mm);
+    }
+
+    /* Rule above the work, from the left margin to the right edge, with a short
+       vertical tick hanging down beside the title. */
+    .label.style-orsay .work {
+      position: relative;
+      margin: 0 -3mm 0 -8mm;
+      padding: calc(var(--k) * 3mm) 3mm 0 8mm;
+      border-top: .3mm solid currentColor;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .label.style-orsay .work::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 3.5mm;
+      width: .3mm;
+      height: calc(var(--k) * 7mm);
+      background: currentColor;
+    }
+
+    .label.style-orsay .artwork-title {
+      font-size: calc(var(--k) * 14pt);
+      font-weight: bold;
+      line-height: 1.1;
+      margin-bottom: .35em;
+    }
+
+    .label.style-orsay .year,
+    .label.style-orsay .medium {
+      font-size: calc(var(--k) * 9pt);
+      font-weight: 600;
+      margin-bottom: .35em;
+    }
+
+    .label.style-orsay .description {
+      font-size: calc(var(--k) * 8pt);
+      line-height: 1.4;
+      margin-top: .6em;
+    }
+
     /* ── Print sheets: A4, 2 × 3 cartels, shared dashed cut lines ── */
     .sheet {
       width: 210mm;
@@ -532,6 +651,8 @@
         <label for="inp-style">Style (tous les cartels)</label>
         <select id="inp-style" onchange="switchStyle()">
           <option value="louvre">Louvre</option>
+          <option value="moma">MoMA</option>
+          <option value="orsay">Orsay</option>
         </select>
       </div>
 
@@ -552,6 +673,11 @@
           <label for="inp-lastname">Nom</label>
           <input id="inp-lastname" type="text" data-field="lastname">
         </div>
+      </div>
+
+      <div class="field-group">
+        <label for="inp-nationality">Nationalité</label>
+        <input id="inp-nationality" type="text" data-field="nationality">
       </div>
 
       <div class="field-row">
@@ -622,8 +748,8 @@
     const PER_SHEET   = 6;
     const MIN_K       = 0.6;   // smallest font scale auto-shrink may use
     const WARN_K      = 0.8;   // below this, flag the cartel as shrunk
-    const FIELDS      = ['firstname', 'lastname', 'birth', 'death', 'title', 'medium', 'year', 'description'];
-    const styleNames  = { louvre: 'Louvre' };
+    // Stored positionally in links: only ever append new fields.
+    const FIELDS      = ['firstname', 'lastname', 'birth', 'death', 'title', 'medium', 'year', 'description', 'nationality'];
     const narrow      = matchMedia('(max-width: 760px)');  // stacked layout, see CSS
 
     function scrollToForm() {
@@ -652,6 +778,7 @@
         id: newId(),
         firstname: 'Jean-Baptiste',
         lastname: 'Pigalle',
+        nationality: 'Française',
         birth: 'Paris, 1714',
         death: 'Paris, 1785',
         title: 'Voltaire nu',
@@ -704,7 +831,7 @@
           return c;
         });
         const i = Math.min(Math.max(0, p.i | 0), cartels.length - 1);
-        return { style: styleNames[p.s] ? p.s : 'louvre', cartels, selected: cartels[i].id };
+        return { style: styles[p.s] ? p.s : 'louvre', cartels, selected: cartels[i].id };
       } catch (e) {
         return null;
       }
@@ -757,12 +884,19 @@
 
     /* ── Label rendering ── */
 
-    function labelHTML(c) {
-      const dates = [c.birth, c.death].filter(Boolean).join(' – ');
-      const med   = [c.medium, c.year].filter(Boolean).join('. ') + (c.medium || c.year ? '.' : '');
-      return `
-        <div class="label style-${state.style}${c.id === state.selected ? ' selected' : ''}" data-id="${c.id}">
-          <div class="label-content">
+    function descriptionHTML(c) {
+      return `<p class="description">${esc(c.description).replace(/\n/g, '<br>')}</p>`;
+    }
+
+    // Each style renders its own label content; the wrapper is shared.
+    const styles = {
+      louvre: {
+        name: 'Louvre',
+        body: c => {
+          const lifespan = [c.birth, c.death].filter(Boolean).join(' – ');
+          const dates    = [c.nationality, lifespan].filter(Boolean).join(', ');
+          const med      = [c.medium, c.year].filter(Boolean).join('. ') + (c.medium || c.year ? '.' : '');
+          return `
             <p class="artist">
               <span class="firstname">${esc(c.firstname) + (c.firstname && c.lastname ? ' ' : '')}</span>
               <span class="lastname">${esc(c.lastname)}</span>
@@ -770,7 +904,45 @@
             <p class="dates">${esc(dates)}</p>
             <p class="artwork-title">${esc(c.title)}</p>
             <p class="medium">${esc(med)}</p>
-            <p class="description">${esc(c.description).replace(/\n/g, '<br>')}</p>
+            ${descriptionHTML(c)}`;
+        },
+      },
+      moma: {
+        name: 'MoMA',
+        body: c => {
+          const artist   = [c.firstname, c.lastname].filter(Boolean).join(' ');
+          const lifespan = [c.birth, c.death].filter(Boolean).join('–');
+          const dates    = [c.nationality, lifespan].filter(Boolean).join(', ');
+          return `
+            <p class="artist">${esc(artist)}</p>
+            <p class="dates">${esc(dates)}</p>
+            <p class="artwork-title"><strong>${esc(c.title)}</strong>${c.year ? `<span class="year">${esc(c.year)}</span>` : ''}</p>
+            <p class="medium">${esc(c.medium)}</p>
+            ${descriptionHTML(c)}`;
+        },
+      },
+      orsay: {
+        name: 'Orsay',
+        body: c => {
+          const artist = [c.firstname, c.lastname].filter(Boolean).join(' ');
+          const dates  = [c.birth, c.death].filter(Boolean).join(' – ');
+          return `
+            <p class="artist">${esc(artist)}</p>
+            <p class="dates">${esc(dates)}</p>
+            <div class="work">
+              <p class="artwork-title">${esc(c.title)}</p>
+              <p class="year">${esc(c.year)}</p>
+              <p class="medium">${esc(c.medium)}</p>
+              ${descriptionHTML(c)}
+            </div>`;
+        },
+      },
+    };
+
+    function labelHTML(c) {
+      return `
+        <div class="label style-${state.style}${c.id === state.selected ? ' selected' : ''}" data-id="${c.id}">
+          <div class="label-content">${styles[state.style].body(c)}
           </div>
         </div>`;
     }
