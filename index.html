@@ -34,8 +34,7 @@
         box-shadow: 0 2px 8px rgba(0,0,0,.08);
       }
 
-      .panel h1,
-      .panel h2 {
+      .panel h1 {
         font-size: 1rem;
         font-weight: bold;
         letter-spacing: .06em;
@@ -46,7 +45,27 @@
         padding-bottom: .5rem;
       }
 
-      /* Form column: form card, then print button. Sticks to the window and
+      .cartels-panel {
+        margin-bottom: 1rem;
+      }
+
+      .cartels-panel .field-group {
+        margin-bottom: 1.1rem;
+      }
+
+      .cartel-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: .4rem;
+      }
+
+      .cartel-actions .btn-add {
+        grid-column: 1 / -1;
+        background: #3a3a3a;
+        color: #fff;
+      }
+
+      /* Form column: cartels card, form card, then print button. Sticks to the window and
          centers its content vertically; scrolls if the window is too short. */
       .form-column {
         flex: 0 0 320px;
@@ -140,9 +159,10 @@
       @media (hover: hover) {
         .btn:hover:not(:disabled) { background: #f4f2ee; }
         .btn-print:hover:not(:disabled) { background: #555; }
-        .preview-toolbar .btn-add:hover { background: #555; }
+        .cartel-actions .btn-add:hover { background: #555; }
       }
       .btn:disabled { opacity: .4; cursor: default; }
+      .btn[hidden] { display: none; }
 
       .btn.danger.confirming {
         background: #9b2c20;
@@ -192,15 +212,6 @@
         letter-spacing: .06em;
         color: #888;
         margin-right: auto;
-      }
-
-      .preview-toolbar .btn {
-        width: auto;
-      }
-
-      .preview-toolbar .btn-add {
-        background: #3a3a3a;
-        color: #fff;
       }
 
       /* A4 sheets, scaled down with a transform so layout (and text fitting)
@@ -273,6 +284,60 @@
         outline: .8mm solid #3a3a3a;
         outline-offset: -.4mm;
       }
+
+      /* Print dialog: pick the cartels to print */
+      .print-dialog {
+        margin: auto;
+        width: min(26rem, calc(100vw - 2rem));
+        color: inherit;
+      }
+
+      .print-dialog::backdrop {
+        background: rgba(0,0,0,.35);
+      }
+
+      .print-list {
+        list-style: none;
+        max-height: 50vh;
+        overflow-y: auto;
+        margin-bottom: .8rem;
+        border-block: 1px solid #e4e0da;
+      }
+
+      .print-list li + li {
+        border-top: 1px solid #e4e0da;
+      }
+
+      .print-list label {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        padding: .45rem .2rem;
+        font-size: .9rem;
+        cursor: pointer;
+      }
+
+      .print-list input {
+        flex: none;
+        width: 1rem;
+        height: 1rem;
+        accent-color: #3a3a3a;
+      }
+
+      .print-dialog .print-info {
+        margin: .6rem 0 0;
+      }
+
+      .print-dialog-actions {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: .4rem;
+        margin-top: 1rem;
+      }
+
+      .print-dialog-actions .btn-print {
+        margin-top: 0;
+      }
     }
 
     /* ── Narrow screens: form on top, preview below ── */
@@ -286,6 +351,9 @@
 
       .form-column {
         flex: none;
+        align-self: center;
+        width: 100%;
+        max-width: 30rem;
         position: static;
         height: auto;
         overflow: visible;
@@ -310,12 +378,8 @@
         min-height: 48px;
       }
 
-      .preview-toolbar .panel-title {
-        flex-basis: 100%;
-      }
-
-      .preview-toolbar .btn {
-        flex: 1 1 auto;
+      .print-list label {
+        min-height: 44px;
       }
 
       /* Must not exceed the page padding, or the page scrolls sideways */
@@ -419,7 +483,8 @@
       }
 
       .form-column,
-      .preview-toolbar {
+      .preview-toolbar,
+      .print-dialog {
         display: none !important;
       }
 
@@ -460,15 +525,23 @@
   <div class="page">
     <!-- ── Form column ── -->
     <aside class="form-column">
-    <div class="panel form-panel">
-      <h1 id="panel-title">Cartel Louvre</h1>
+    <div class="panel cartels-panel">
+      <h1>Mes cartels</h1>
 
-      <div class="field-group" style="margin-bottom:1.1rem;">
+      <div class="field-group">
         <label for="inp-style">Style (tous les cartels)</label>
         <select id="inp-style" onchange="switchStyle()">
           <option value="louvre">Louvre</option>
         </select>
       </div>
+
+      <div class="cartel-actions">
+        <button class="btn btn-add" onclick="addCartel()">+ Ajouter</button>
+        <button class="btn" onclick="duplicateCartel()">Dupliquer</button>
+        <button class="btn danger" id="btn-delete" onclick="deleteCartel()">Supprimer</button>      </div>
+    </div>
+
+    <div class="panel form-panel">
 
       <div class="field-row">
         <div class="field-group">
@@ -514,7 +587,7 @@
       </div>
     </div>
 
-      <button class="btn btn-print" id="btn-print" onclick="window.print()">Imprimer les cartels</button>
+      <button class="btn btn-print" id="btn-print" onclick="openPrintDialog()">Imprimer les cartels…</button>
       <button class="btn btn-copy" id="btn-copy" onclick="copyLink()">Copier le lien</button>
       <p class="print-info" id="print-info"></p>
       <p class="print-info" id="link-info"></p>
@@ -524,17 +597,24 @@
     <main class="preview-panel">
       <div class="preview-toolbar">
         <p class="panel-title" id="preview-title">Aperçu</p>
-        <button class="btn btn-add" onclick="addCartel()">+ Ajouter</button>
-        <button class="btn" onclick="duplicateCartel()">Dupliquer</button>
-        <button class="btn" id="btn-up" onclick="moveCartel(-1)" title="Déplacer avant">← Avant</button>
-        <button class="btn" id="btn-down" onclick="moveCartel(1)" title="Déplacer après">Après →</button>
-        <button class="btn danger" id="btn-delete" onclick="deleteCartel()">Supprimer</button>
       </div>
       <div class="sheets-viewport" id="sheets-viewport">
         <div class="print-area" id="print-area"></div>
       </div>
     </main>
   </div>
+
+  <!-- ── Print dialog: pick the cartels to print ── -->
+  <dialog class="panel print-dialog" id="print-dialog" aria-labelledby="print-dialog-title">
+    <h1 id="print-dialog-title">Imprimer</h1>
+    <ul class="print-list" id="print-list"></ul>
+    <button class="btn" id="btn-print-toggle-all" onclick="togglePrintAll()">Tout décocher</button>
+    <p class="print-info" id="print-dialog-info"></p>
+    <div class="print-dialog-actions">
+      <button class="btn" onclick="closePrintDialog()">Annuler</button>
+      <button class="btn btn-print" id="btn-print-confirm" onclick="confirmPrint()">Imprimer</button>
+    </div>
+  </dialog>
 
   <script>
     const LEGACY_STORAGE_KEY = 'cartels.v1';  // pre-URL autosave, migrated once
@@ -709,11 +789,16 @@
       else if (k < WARN_K) label.dataset.fit = 'shrunk';
     }
 
+    // Ids picked in the print dialog; while set, the sheets hold only those
+    // cartels, packed together. Null prints everything (e.g. Ctrl+P).
+    let printSelection = null;
+
     function renderPrintArea() {
       const area = document.getElementById('print-area');
+      const cartels = printSelection ? state.cartels.filter(c => printSelection.has(c.id)) : state.cartels;
       let html = '';
-      for (let i = 0; i < state.cartels.length; i += PER_SHEET) {
-        html += '<div class="sheet">' + state.cartels.slice(i, i + PER_SHEET).map(labelHTML).join('') + '</div>';
+      for (let i = 0; i < cartels.length; i += PER_SHEET) {
+        html += '<div class="sheet">' + cartels.slice(i, i + PER_SHEET).map(labelHTML).join('') + '</div>';
       }
       area.innerHTML = html;
       area.querySelectorAll('.label').forEach(fit);
@@ -743,19 +828,18 @@
         el.classList.toggle('selected', el.dataset.id === state.selected));
     }
 
+    function sheetsText(n) {
+      const sheets = Math.ceil(n / PER_SHEET);
+      return `${sheets} page${sheets > 1 ? 's' : ''} A4 (${PER_SHEET} par page, 10 × 7 cm)`;
+    }
+
     function renderControls() {
-      const i = selectedIndex();
-      document.getElementById('btn-up').disabled     = i === 0;
-      document.getElementById('btn-down').disabled   = i === state.cartels.length - 1;
       document.getElementById('btn-delete').disabled = state.cartels.length === 1;
 
       const n = state.cartels.length;
       const sheets = Math.ceil(n / PER_SHEET);
       document.getElementById('print-info').textContent =
-        `${n} cartel${n > 1 ? 's' : ''} · ${sheets} page${sheets > 1 ? 's' : ''} A4 (${PER_SHEET} par page, 10 × 7 cm). ` +
-        'Découper le long des pointillés.';
-      document.getElementById('btn-print').textContent = `Imprimer ${n > 1 ? 'les ' + n + ' cartels' : 'le cartel'}`;
-      document.getElementById('preview-title').textContent = `Aperçu · ${sheets} page${sheets > 1 ? 's' : ''} A4`;
+        `${n} cartel${n > 1 ? 's' : ''} · ${sheetsText(n)}. Découper le long des pointillés.`;      document.getElementById('preview-title').textContent = `Aperçu · ${sheets} page${sheets > 1 ? 's' : ''} A4`;
     }
 
     function renderLinkInfo() {
@@ -830,13 +914,49 @@
       btn.textContent = 'Supprimer';
     }
 
-    function moveCartel(delta) {
-      const i = selectedIndex();
-      const j = i + delta;
-      if (j < 0 || j >= state.cartels.length) return;
-      [state.cartels[i], state.cartels[j]] = [state.cartels[j], state.cartels[i]];
-      save();
-      renderAll();
+    /* ── Print dialog ── */
+
+    function printBoxes() {
+      return [...document.querySelectorAll('#print-list input')];
+    }
+
+    function openPrintDialog() {
+      document.getElementById('print-list').innerHTML = state.cartels.map((c, i) => {
+        const artist = [c.firstname, c.lastname].filter(Boolean).join(' ');
+        const name = [artist, c.title].filter(Boolean).join(' — ') || `Cartel ${i + 1}`;
+        return `<li><label><input type="checkbox" data-index="${i}" checked> ${esc(name)}</label></li>`;
+      }).join('');
+      renderPrintDialog();
+      document.getElementById('print-dialog').showModal();
+    }
+
+    function renderPrintDialog() {
+      const boxes = printBoxes();
+      const p = boxes.filter(b => b.checked).length;
+      const confirmBtn = document.getElementById('btn-print-confirm');
+      confirmBtn.disabled = p === 0;
+      confirmBtn.textContent = p ? `Imprimer ${p} cartel${p > 1 ? 's' : ''}` : 'Aucun cartel coché';
+      document.getElementById('print-dialog-info').textContent = p ? sheetsText(p) + '.' : '';
+      const toggle = document.getElementById('btn-print-toggle-all');
+      toggle.textContent = p === boxes.length ? 'Tout décocher' : 'Tout cocher';
+      toggle.hidden = boxes.length === 1;
+    }
+
+    function togglePrintAll() {
+      const boxes = printBoxes();
+      const on = !boxes.every(b => b.checked);
+      boxes.forEach(b => b.checked = on);
+      renderPrintDialog();
+    }
+
+    function confirmPrint() {
+      printSelection = new Set(printBoxes().filter(b => b.checked).map(b => state.cartels[b.dataset.index].id));
+      closePrintDialog();
+      window.print();
+    }
+
+    function closePrintDialog() {
+      document.getElementById('print-dialog').close();
     }
 
     function switchStyle() {
@@ -848,7 +968,6 @@
 
     function syncStyle() {
       document.getElementById('inp-style').value = state.style;
-      document.getElementById('panel-title').textContent = 'Cartel ' + (styleNames[state.style] || state.style);
     }
 
     let copyTimer = null;
@@ -881,7 +1000,12 @@
       selectCartel(label.dataset.id);
       if (narrow.matches) scrollToForm();
     });
+    document.getElementById('print-list').addEventListener('change', renderPrintDialog);
     window.addEventListener('resize', scalePreview);
+
+    // Ctrl+P skips the dialog: printSelection is null then, so all cartels print.
+    window.addEventListener('beforeprint', renderPrintArea);
+    window.addEventListener('afterprint', () => { printSelection = null; renderPrintArea(); });
 
     // A different link pasted into this tab: load it.
     window.addEventListener('hashchange', async () => {
